@@ -1,24 +1,43 @@
 defmodule Hasher do
-  def hash_memory(file, algo) do
-    data = File.read!(file)
+  def hash_memory(file, algo) when is_atom(algo) do
+    {_, hashes} = hash_memory(file, [algo])
 
-    hash =
-      :crypto.hash(algo, data)
-      |> format_hash()
-
-    {file, hash}
+    {file, Enum.at(hashes, 0)}
   end
 
-  def hash_streaming(file, algo, buffer_size) do
-    update_hash = fn data, hash_state -> :crypto.hash_update(hash_state, data) end
+  def hash_memory(file, algos) when is_list(algos) do
+    data = File.read!(file)
 
-    hash =
+    hash_one =
+      fn algo ->
+        :crypto.hash(algo, data)
+        |> format_hash()
+      end
+
+    {file, Enum.map(algos, hash_one)}
+  end
+
+  def hash_streaming(file, algo, buffer_size) when is_atom(algo) do
+    {_, hashes} = hash_streaming(file, [algo], buffer_size)
+
+    {file, Enum.at(hashes, 0)}
+  end
+
+  def hash_streaming(file, algos, buffer_size) when is_list(algos) do
+    hash_states = Enum.map(algos, &:crypto.hash_init(&1))
+
+    update_hashes =
+      fn data, hash_states ->
+        Enum.map(hash_states, &:crypto.hash_update(&1, data))
+      end
+
+    hashes =
       File.stream!(file, [:read_ahead, :binary], buffer_size)
-      |> Enum.reduce(:crypto.hash_init(algo), update_hash)
-      |> :crypto.hash_final()
-      |> format_hash()
+      |> Enum.reduce(hash_states, update_hashes)
+      |> Enum.map(&:crypto.hash_final(&1))
+      |> Enum.map(&format_hash(&1))
 
-    {file, hash}
+    {file, hashes}
   end
 
   defp format_hash(hash) do
