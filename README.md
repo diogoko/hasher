@@ -21,3 +21,9 @@ Hash each file using the algorithm and print the digest and the file name.
 --buffer=BUFFER  Buffer size in bytes when using "streaming" mode;
                  default = 2097152
 ```
+
+## Tests
+
+```
+mix test
+```
