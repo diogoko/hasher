@@ -26,14 +26,18 @@ defmodule HasherMain do
       end
 
     print_result =
-      fn {file, hash} ->
+      fn file, hash ->
         if not quiet do
           IO.puts("#{hash}  #{file}")
         end
       end
 
     args
-    |> Enum.map(&do_hash.(&1, String.to_atom(algo)))
-    |> Enum.map(print_result)
+    |> Enum.each(
+      fn file ->
+        hash = do_hash.(file, String.to_atom(algo))
+        print_result.(file, hash)
+      end
+    )
   end
 end
