@@ -35,9 +35,5 @@ defmodule Hasher do
     |> Enum.map(&format_hash(&1))
   end
 
-  defp format_hash(hash) do
-    hash
-    |> Base.encode16()
-    |> String.downcase
-  end
+  defp format_hash(hash), do: Base.encode16(hash, case: :lower)
 end
