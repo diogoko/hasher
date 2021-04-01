@@ -29,7 +29,7 @@ defmodule Hasher do
         Enum.map(hash_states, &:crypto.hash_update(&1, data))
       end
 
-    File.stream!(file, [:read_ahead, :binary], buffer_size)
+    File.stream!(file, [], buffer_size)
     |> Enum.reduce(hash_states, update_hashes)
     |> Enum.map(&:crypto.hash_final(&1))
     |> Enum.map(&format_hash(&1))
